@@ -9,6 +9,9 @@ on:
       - "v*"
   workflow_dispatch:
 
+permissions:
+  contents: write   # the GITHUB_TOKEN needs this to create a release and upload to it
+
 jobs:
   build:
     runs-on: windows-latest
