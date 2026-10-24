@@ -2,6 +2,7 @@
 network access, so these run anywhere (including CI)."""
 import time
 import unittest
+from unittest import mock
 
 from lansled import scan, vendor
 
@@ -69,6 +70,41 @@ class ParsePortsTests(unittest.TestCase):
     def test_too_many_ports_rejected(self):
         with self.assertRaises(scan.ScanError):
             scan.parse_ports("1-{}".format(scan.MAX_PORTS + 1))
+
+
+class ArpScanFallbackTests(unittest.TestCase):
+    """Scapy's raw-socket failure shows up as a different exception type on
+    every platform (and even different Scapy versions) -- a Windows machine
+    with no Npcap/WinPcap raises a plain RuntimeError, not an OSError or
+    PermissionError, and this was missed once already (it crashed the whole
+    SSE stream instead of falling back to a ping sweep). Whatever scapy
+    throws here must become PermissionNeeded, never propagate raw."""
+
+    def _net(self):
+        net, _ = scan.parse_subnet("192.168.0.0/30")
+        return net
+
+    def test_runtime_error_from_missing_npcap_is_caught(self):
+        with mock.patch("scapy.all.srp", side_effect=RuntimeError(
+                "Sniffing and sending packets is not available at layer 2: winpcap is not installed.")):
+            with self.assertRaises(scan.PermissionNeeded):
+                scan.arp_scan(self._net())
+
+    def test_permission_error_is_caught(self):
+        with mock.patch("scapy.all.srp", side_effect=PermissionError("Operation not permitted")):
+            with self.assertRaises(scan.PermissionNeeded):
+                scan.arp_scan(self._net())
+
+    def test_os_error_is_caught(self):
+        with mock.patch("scapy.all.srp", side_effect=OSError("Socket type not supported")):
+            with self.assertRaises(scan.PermissionNeeded):
+                scan.arp_scan(self._net())
+
+    def test_some_other_unexpected_exception_is_still_caught(self):
+        # the point of the broad catch: whatever it is, the scan must not crash
+        with mock.patch("scapy.all.srp", side_effect=ValueError("something scapy-internal")):
+            with self.assertRaises(scan.PermissionNeeded):
+                scan.arp_scan(self._net())
 
 
 class VendorLookupTests(unittest.TestCase):

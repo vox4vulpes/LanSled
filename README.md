@@ -76,7 +76,7 @@ On Windows, with Python installed:
 
 ```sh
 pip install -r requirements-build.txt
-pyinstaller --onefile --name LanSled --add-data "lansled/static;lansled/static" --uac-admin run.py
+pyinstaller --onefile --name LanSled --add-data "lansled/static;lansled/static" --icon assets/icon.ico --uac-admin run.py
 ```
 
 `dist\LanSled.exe` is the result. `--uac-admin` is what makes Windows prompt

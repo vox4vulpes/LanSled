@@ -84,25 +84,21 @@ def parse_ports(text):
 
 def arp_scan(net, timeout=2.0):
     """{ip: mac} for everything that answers an ARP who-has on this subnet.
-    Raises PermissionNeeded if this process can't open a raw socket."""
+    Raises PermissionNeeded if this process can't do a raw layer-2 send --
+    no root/admin on Linux/macOS, or no Npcap/WinPcap on Windows. Scapy's own
+    failure for that varies by platform and even by Scapy version (OSError,
+    PermissionError, RuntimeError, one of its own Scapy_Exception subclasses),
+    so anything going wrong here is treated the same way: fall back to a ping
+    sweep instead of crashing the whole scan."""
     try:
         from scapy.all import ARP, Ether, srp
-        from scapy.error import Scapy_Exception
     except ImportError as e:
         raise PermissionNeeded("scapy isn’t installed") from e
     try:
         pkt = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=str(net))
         answered, _ = srp(pkt, timeout=timeout, verbose=False, retry=1)
-    except PermissionError as e:
+    except Exception as e:  # noqa: BLE001 -- see the docstring: anything here means "no raw socket"
         raise PermissionNeeded(str(e)) from e
-    except OSError as e:
-        # "Operation not permitted" / "Socket type not supported" etc. land here too,
-        # depending on platform -- all mean "no raw socket access".
-        raise PermissionNeeded(str(e)) from e
-    except Exception as e:  # noqa: BLE001 -- scapy's own exception types vary by platform
-        if "Scapy_Exception" in type(e).__name__ or isinstance(e, Scapy_Exception):
-            raise PermissionNeeded(str(e)) from e
-        raise
     return {r.psrc: r.hwsrc.upper() for _, r in answered}
 
 

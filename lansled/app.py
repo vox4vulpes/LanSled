@@ -30,8 +30,11 @@ def api_scan():
     want_hostnames = request.args.get("hostnames_on", "1") != "0"
 
     def stream():
-        for event in scan.scan_network(subnet, ports, want_ports, want_hostnames):
-            yield f"data: {json.dumps(event)}\n\n"
+        try:
+            for event in scan.scan_network(subnet, ports, want_ports, want_hostnames):
+                yield f"data: {json.dumps(event)}\n\n"
+        except Exception as e:  # noqa: BLE001 -- anything unanticipated still ends the scan cleanly
+            yield f"data: {json.dumps({'type': 'error', 'message': f'Something went wrong: {e}'})}\n\n"
 
     return Response(stream(), mimetype="text/event-stream",
                      headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
