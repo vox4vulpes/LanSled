@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.1]
+
+### Fixed
+- A crash on Windows without Npcap/WinPcap installed: scapy raises a plain
+  `RuntimeError` there (not the `OSError`/`PermissionError` this expected),
+  which went uncaught and broke the scan mid-stream instead of falling back
+  to a ping sweep like it's supposed to. Any failure from the ARP attempt is
+  now treated the same way, and the SSE stream itself has a safety net so an
+  unanticipated error still ends the scan cleanly instead of crashing it.
+
+### Added
+- An app icon for `LanSled.exe`.
+
 ## [0.1.0]
 
 ### Added
