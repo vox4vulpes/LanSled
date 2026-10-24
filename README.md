@@ -41,9 +41,14 @@ port.
 - **Ping sweep**: a plain ICMP ping to every address, threaded, no special
   privileges — the fallback when ARP isn't available, and a supplement when it
   is (catches anything ARP missed).
-- **ARP cache read**: after the ping sweep, LanSled reads the OS's own
-  neighbour table (`ip neigh` / `arp -a`) to pick up MACs for hosts it only
-  found by pinging.
+- **TCP presence probe**: for whatever's left — a device with ICMP just
+  blocked, say — a quick connection attempt to a handful of common ports
+  (80, 443, 22, 445, 139, 8080). Even a closed-port refusal still means a live
+  device, and like a ping, it's enough for the OS to resolve and cache the MAC
+  on its own. No raw sockets here either.
+- **ARP cache read**: after the ping sweep and the TCP probe, LanSled reads
+  the OS's own neighbour table (`ip neigh` / `arp -a`) to pick up MACs for
+  whatever it found without a raw ARP reply.
 - **Vendor lookup**: the first three bytes of a MAC (the OUI) looked up
   against a local copy of the [IEEE's public OUI
   registry](https://standards-oui.ieee.org/oui/oui.csv) — over 40,000 entries,

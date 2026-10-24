@@ -58,9 +58,10 @@
 
   <p class="note">
     ARP scanning needs this run as root/admin for a raw socket; without it,
-    LanSled falls back to a ping sweep (fewer devices found, since some don't
-    answer pings). Everything runs locally — nothing about your network is
-    sent anywhere. Only scan networks you own or have permission to scan.
+    LanSled falls back to a ping sweep plus a quick TCP probe on common ports
+    (fewer devices found than true ARP, since some answer neither). Everything
+    runs locally — nothing about your network is sent anywhere. Only scan
+    networks you own or have permission to scan.
   </p>
 </main>
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2]
+
+### Added
+- A TCP presence probe for whatever a ping sweep still misses (ICMP blocked,
+  but the device answers -- or even just refuses -- a connection on one of a
+  handful of common ports). No raw sockets needed, so it works on a machine
+  with no Npcap/WinPcap and no root/admin, same as the ping sweep.
+
 ## [0.1.1]
 
 ### Fixed

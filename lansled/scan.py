@@ -157,6 +157,42 @@ def read_arp_cache():
     return out
 
 
+# ---------- a TCP presence probe: for hosts that don't answer a ping (a
+# closed-off device, or ICMP just blocked) but do answer *something* on one of
+# a few very common ports -- even a closed-port refusal still means a live
+# device, and either way the OS does its own ARP resolution to reach it, so
+# read_arp_cache() can pick up a MAC afterward exactly like it does post-ping.
+# No raw sockets, no admin/Npcap -- this works everywhere ping does. ----------
+
+TCP_PROBE_PORTS = [80, 443, 22, 445, 139, 8080]
+TCP_PROBE_TIMEOUT_S = 0.4
+
+
+def _tcp_alive(ip):
+    for port in TCP_PROBE_PORTS:
+        try:
+            with socket.create_connection((ip, port), timeout=TCP_PROBE_TIMEOUT_S):
+                return True
+        except ConnectionRefusedError:
+            return True   # a RST still means someone's home, just not listening there
+        except OSError:
+            continue      # timeout / unreachable -- try the next port
+    return False
+
+
+def tcp_presence_sweep(hosts):
+    found = set()
+    hosts = list(hosts)
+    if not hosts:
+        return found
+    with ThreadPoolExecutor(max_workers=PING_WORKERS) as ex:
+        futs = {ex.submit(_tcp_alive, str(h)): h for h in hosts}
+        for fut in as_completed(futs):
+            if fut.result():
+                found.add(str(futs[fut]))
+    return found
+
+
 # ---------- port scan: a plain TCP connect, no privileges needed ----------
 
 def _probe_port(ip, port):
@@ -211,15 +247,22 @@ def scan_network(subnet_text, ports_text, want_ports=True, want_hostnames=True):
         yield {"type": "warning", "message": f"ARP scan needs admin/root privileges ({e}) — falling back to a ping sweep only."}
 
     pinged = ping_sweep(h for h in hosts if str(h) not in mac_by_ip)
-    if pinged:
+
+    still_quiet = [h for h in hosts if str(h) not in mac_by_ip and str(h) not in pinged]
+    tcp_found = tcp_presence_sweep(still_quiet)
+    if tcp_found:
+        yield {"type": "status", "message": f"{len(tcp_found)} more answered a TCP probe (no ping reply)…"}
+
+    newly_found = pinged | tcp_found
+    if newly_found:
         cache = read_arp_cache()
-        for ip in pinged:
+        for ip in newly_found:
             if ip not in mac_by_ip:
                 mac = cache.get(ip)
                 if mac:
                     mac_by_ip[ip] = mac
 
-    all_ips = sorted(set(mac_by_ip) | pinged, key=lambda s: tuple(int(p) for p in s.split(".")))
+    all_ips = sorted(set(mac_by_ip) | newly_found, key=lambda s: tuple(int(p) for p in s.split(".")))
     yield {"type": "status", "message": f"{len(all_ips)} device(s) up."}
 
     hosts_out = []

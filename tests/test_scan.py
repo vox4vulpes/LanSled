@@ -1,5 +1,6 @@
 """Unit tests for the pure logic in lansled.scan and lansled.vendor -- no real
 network access, so these run anywhere (including CI)."""
+import socket
 import time
 import unittest
 from unittest import mock
@@ -105,6 +106,52 @@ class ArpScanFallbackTests(unittest.TestCase):
         with mock.patch("scapy.all.srp", side_effect=ValueError("something scapy-internal")):
             with self.assertRaises(scan.PermissionNeeded):
                 scan.arp_scan(self._net())
+
+
+class TcpPresenceSweepTests(unittest.TestCase):
+    """A host that doesn't answer a ping (ICMP blocked, or just a device that
+    doesn't reply to it) should still turn up if it answers -- or even just
+    refuses -- a connection on one of a few common ports. No ping, no ARP, no
+    admin: this is what's left to find such a host on a machine with no
+    Npcap/WinPcap at all."""
+
+    def test_open_port_counts_as_alive(self):
+        with mock.patch("socket.create_connection", return_value=mock.MagicMock(__enter__=mock.MagicMock(), __exit__=mock.MagicMock())):
+            self.assertTrue(scan._tcp_alive("10.0.0.5"))
+
+    def test_connection_refused_still_counts_as_alive(self):
+        # a RST means a live device, even though nothing's listening on that port
+        with mock.patch("socket.create_connection", side_effect=ConnectionRefusedError()):
+            self.assertTrue(scan._tcp_alive("10.0.0.5"))
+
+    def test_every_port_timing_out_means_not_alive(self):
+        with mock.patch("socket.create_connection", side_effect=socket.timeout()):
+            self.assertFalse(scan._tcp_alive("10.0.0.5"))
+
+    def test_tries_the_next_port_after_a_timeout(self):
+        # times out on the first probe port, then succeeds on a later one
+        calls = []
+
+        def fake_connect(addr, timeout):
+            calls.append(addr[1])
+            if addr[1] == scan.TCP_PROBE_PORTS[0]:
+                raise socket.timeout()
+            return mock.MagicMock(__enter__=mock.MagicMock(), __exit__=mock.MagicMock())
+
+        with mock.patch("socket.create_connection", side_effect=fake_connect):
+            self.assertTrue(scan._tcp_alive("10.0.0.5"))
+        self.assertGreaterEqual(len(calls), 2)
+
+    def test_sweep_returns_only_the_hosts_that_answered(self):
+        def fake_alive(ip):
+            return ip == "10.0.0.2"
+
+        with mock.patch("lansled.scan._tcp_alive", side_effect=fake_alive):
+            found = scan.tcp_presence_sweep(["10.0.0.1", "10.0.0.2", "10.0.0.3"])
+        self.assertEqual(found, {"10.0.0.2"})
+
+    def test_empty_host_list_short_circuits(self):
+        self.assertEqual(scan.tcp_presence_sweep([]), set())
 
 
 class VendorLookupTests(unittest.TestCase):
