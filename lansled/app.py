@@ -1,12 +1,12 @@
 """LanSled's web UI: one page, one streaming endpoint."""
 import json
-import os
 
 from flask import Flask, Response, request, send_from_directory
 
 from . import scan
+from .paths import static_dir
 
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+STATIC_DIR = static_dir()
 
 app = Flask(__name__, static_folder=None)
 
@@ -39,12 +39,20 @@ def api_scan():
 
 def main():
     import argparse
+    import threading
+    import webbrowser
+
     p = argparse.ArgumentParser(prog="lansled", description="Find devices on a network you specify.")
     p.add_argument("--host", default="127.0.0.1", help="interface to bind the web UI to (default: 127.0.0.1, this machine only)")
     p.add_argument("--port", type=int, default=5151, help="port for the web UI (default: 5151)")
+    p.add_argument("--no-browser", action="store_true", help="don't open a browser tab automatically")
     args = p.parse_args()
-    print(f"LanSled is up: open http://{args.host if args.host != '0.0.0.0' else 'localhost'}:{args.port} in a browser")
+
+    url = f"http://{args.host if args.host != '0.0.0.0' else 'localhost'}:{args.port}"
+    print(f"LanSled is up: {url}")
     print("ARP scanning needs this to run as root/admin to open a raw socket; without it, LanSled falls back to a ping sweep.")
+    if not args.no_browser:
+        threading.Timer(0.8, lambda: webbrowser.open(url)).start()
     app.run(host=args.host, port=args.port, threaded=True)
 
 

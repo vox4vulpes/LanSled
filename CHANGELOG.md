@@ -13,3 +13,7 @@
   Server-Sent Events as each device, hostname and port set is found.
 - Input validation that rejects an oversized network or port range instantly,
   rather than trying to sweep millions of addresses.
+- A portable `LanSled.exe` for Windows (built with PyInstaller, no Python
+  install needed), with a CI workflow that builds and attaches it to a
+  release on a version tag. It opens a browser tab on its own, and asks for
+  admin so ARP scanning works out of the box.

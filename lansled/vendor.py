@@ -3,7 +3,9 @@ calls, nothing about your devices ever leaves the machine."""
 import json
 import os
 
-_OUI_PATH = os.path.join(os.path.dirname(__file__), "static", "oui.json")
+from .paths import static_dir
+
+_OUI_PATH = os.path.join(static_dir(), "oui.json")
 _oui = None
 
 

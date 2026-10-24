@@ -1,0 +1,4 @@
+# Only needed to build the portable .exe yourself -- not a runtime dependency.
+-r requirements.txt
+pyinstaller>=6.0
+pyinstaller-hooks-contrib

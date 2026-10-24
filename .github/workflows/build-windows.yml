@@ -1,0 +1,56 @@
+name: Build portable Windows .exe
+
+# Push a tag like v0.1.0 to build and publish a release; run it by hand
+# (workflow_dispatch) to just get a downloadable build artifact without
+# publishing a release.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller pyinstaller-hooks-contrib
+
+      - name: Build LanSled.exe
+        # --uac-admin embeds a manifest so Windows prompts for elevation on
+        # launch -- without it, ARP scanning silently falls back to a ping
+        # sweep, which is correct but not what a double-click should do.
+        run: >
+          pyinstaller --onefile --name LanSled
+          --add-data "lansled/static;lansled/static"
+          --uac-admin
+          run.py
+
+      - name: Smoke-test the build
+        run: |
+          Start-Process -FilePath "dist\LanSled.exe" -ArgumentList "--no-browser" -WindowStyle Hidden
+          Start-Sleep -Seconds 5
+          $resp = Invoke-WebRequest -Uri "http://127.0.0.1:5151/" -UseBasicParsing
+          if ($resp.StatusCode -ne 200) { throw "LanSled.exe didn't come up ($($resp.StatusCode))" }
+          Write-Host "LanSled.exe served its page correctly."
+        shell: pwsh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LanSled-windows
+          path: dist/LanSled.exe
+
+      - name: Publish a release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/LanSled.exe
+          generate_release_notes: true

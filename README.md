@@ -8,7 +8,15 @@ machine.
 
 **Only scan networks you own or have explicit permission to scan.**
 
-## Install and run
+## Windows: just the .exe, nothing to install
+
+Grab **`LanSled.exe`** from the [latest release](https://github.com/vox4vulpes/LanSled/releases/latest)
+and double-click it — no Python, no `pip`, nothing. Windows will ask to run
+it as administrator (needed for the ARP scan's raw socket); say yes and a
+browser tab opens on its own. Say no, or skip the release and just run it
+normally, and it still works — it falls back to a ping sweep instead.
+
+## Install and run from source
 
 ```sh
 pip install -r requirements.txt
@@ -58,6 +66,22 @@ addresses.
   and the bundled `oui.json`.
 - `tests/` — unit tests for the parsing/validation/lookup logic (no real
   network access needed, so these run anywhere).
+- `.github/workflows/build-windows.yml` — builds `LanSled.exe` on a Windows
+  runner and attaches it to a release when you push a tag like `v0.1.0` (or
+  run it by hand for just a build artifact).
+
+## Building the portable .exe yourself
+
+On Windows, with Python installed:
+
+```sh
+pip install -r requirements-build.txt
+pyinstaller --onefile --name LanSled --add-data "lansled/static;lansled/static" --uac-admin run.py
+```
+
+`dist\LanSled.exe` is the result. `--uac-admin` is what makes Windows prompt
+for elevation on launch; drop it if you'd rather it just run unprivileged
+(ping-sweep fallback) every time.
 
 ## License
 
