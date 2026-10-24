@@ -1,0 +1,88 @@
+:root{
+  --bg: #0b1016; --bg-panel: #121a24; --edge: #22303e;
+  --fg: #d7e3ec; --fg-soft: #8396a6; --fg-dim: #566574;
+  --acc: #37d6c4; --acc-dim: #1d6e66; --warn: #e0a83b; --err: #e05a4b;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --sans: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0; height:100%;}
+body{
+  background: radial-gradient(1200px 600px at 50% -10%, #152030 0%, var(--bg) 55%);
+  color: var(--fg); font-family: var(--sans); line-height:1.5;
+  min-height:100%; padding-bottom: 40px;
+}
+header.top{
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding: 36px 16px 22px;
+}
+.brand{display:flex; align-items:center; gap:8px; color: var(--acc);}
+.brand h1{margin:0; font-size:26px; font-weight:700; letter-spacing:.01em; color:var(--fg);}
+.brand h1 b{color: var(--acc);}
+.tagline{margin:0; color: var(--fg-soft); font-size:13px;}
+
+main{max-width: 920px; margin: 0 auto; padding: 0 16px;}
+
+.panel{
+  background: var(--bg-panel); border:1px solid var(--edge); border-radius:10px;
+  padding:16px; display:flex; flex-wrap:wrap; gap:14px; align-items:end;
+}
+.field{display:flex; flex-direction:column; gap:5px; flex:1 1 200px; min-width:160px;}
+.field label{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--fg-soft);}
+.field .hint{text-transform:none; letter-spacing:0; opacity:.75;}
+input[type=text]{
+  background:#0c1319; border:1px solid var(--edge); color:var(--fg);
+  font-family: var(--mono); font-size:14px; padding:9px 10px; border-radius:7px; outline:none;
+}
+input[type=text]:focus{border-color: var(--acc);}
+.toggles{display:flex; gap:16px; flex:0 0 auto; padding-bottom:9px;}
+.chk{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--fg-soft); cursor:pointer; user-select:none;}
+.chk input{accent-color: var(--acc);}
+.actions{display:flex; gap:8px; flex:0 0 auto;}
+button{
+  font-family: var(--sans); font-size:14px; font-weight:600; padding:9px 18px; border-radius:7px;
+  border:1px solid var(--edge); background:#17212c; color:var(--fg); cursor:pointer;
+}
+#scan-btn{background: var(--acc); color:#06231f; border-color: var(--acc);}
+#scan-btn:hover{filter:brightness(1.08);}
+#scan-btn:disabled{opacity:.55; cursor:default; filter:none;}
+#stop-btn{color: var(--err); border-color: var(--err);}
+
+.status{min-height:18px; font-family: var(--mono); font-size:12.5px; color: var(--fg-soft); margin: 12px 2px 0;}
+.status.warn{color: var(--warn);}
+.status.err{color: var(--err);}
+
+.table-wrap{
+  margin-top:14px; border:1px solid var(--edge); border-radius:10px; overflow:auto;
+  background: var(--bg-panel);
+}
+table{width:100%; border-collapse:collapse; font-size:13.5px;}
+th{
+  text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.07em;
+  color: var(--fg-dim); padding:10px 12px; border-bottom:1px solid var(--edge); white-space:nowrap;
+}
+td{padding:9px 12px; border-bottom:1px solid #1a2531; font-family: var(--mono); vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tr.is-new td{animation: appear .5s ease-out;}
+@keyframes appear{from{background:rgba(55,214,196,.14);} to{background:transparent;}}
+td.ip{color: var(--acc); font-weight:600;}
+td.vendor{font-family: var(--sans); color: var(--fg);}
+td.hostname{font-family: var(--sans); color: var(--fg-soft);}
+td.mac, td.vendor, td.hostname{color: var(--fg-soft);}
+.port-chip{
+  display:inline-block; background:#132019; border:1px solid var(--acc-dim); color: var(--acc);
+  border-radius:5px; padding:1px 6px; margin:0 4px 4px 0; font-size:12px;
+}
+.dim{color: var(--fg-dim);}
+.empty{color: var(--fg-dim); font-family: var(--sans); text-align:center; padding:24px 12px;}
+.spin{display:inline-block; width:10px; height:10px; border-radius:50%; border:2px solid var(--fg-dim);
+      border-top-color: var(--acc); animation: spin .8s linear infinite; vertical-align:-1px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.note{margin-top:22px; font-size:12px; color: var(--fg-dim); line-height:1.6;}
+
+@media (max-width: 560px){
+  .panel{flex-direction:column; align-items:stretch;}
+  .field{flex:none;}
+  .toggles{padding-bottom:0;}
+}

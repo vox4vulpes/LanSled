@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LanSled</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%2337d6c4'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%2337d6c4' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%2337d6c4' stroke-width='2' opacity='.5'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+      <circle cx="16" cy="16" r="2.4" fill="currentColor"/>
+      <circle cx="16" cy="16" r="8" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".55"/>
+      <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".25"/>
+      <circle cx="16" cy="4" r="1.6" fill="currentColor"/>
+      <circle cx="27" cy="21" r="1.6" fill="currentColor"/>
+      <circle cx="5" cy="21" r="1.6" fill="currentColor"/>
+    </svg>
+    <h1>Lan<b>Sled</b></h1>
+  </div>
+  <p class="tagline">Find devices on a network you specify.</p>
+</header>
+
+<main>
+  <form id="scan-form" class="panel">
+    <div class="field">
+      <label for="subnet">Network</label>
+      <input id="subnet" name="subnet" type="text" placeholder="192.168.1.0/24" autocomplete="off" spellcheck="false" required>
+    </div>
+    <div class="field">
+      <label for="ports">Ports <span class="hint">(blank = common ports)</span></label>
+      <input id="ports" name="ports" type="text" placeholder="22,80,443 or 1-1024" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="toggles">
+      <label class="chk"><input id="want-ports" type="checkbox" checked> Scan ports</label>
+      <label class="chk"><input id="want-hostnames" type="checkbox" checked> Resolve hostnames</label>
+    </div>
+    <div class="actions">
+      <button id="scan-btn" type="submit">Scan</button>
+      <button id="stop-btn" type="button" hidden>Stop</button>
+    </div>
+  </form>
+
+  <p id="status" class="status" aria-live="polite"></p>
+
+  <div class="table-wrap">
+    <table id="results">
+      <thead>
+        <tr><th>IP</th><th>MAC</th><th>Vendor</th><th>Hostname</th><th>Open ports</th></tr>
+      </thead>
+      <tbody id="results-body">
+        <tr id="empty-row"><td colspan="5" class="empty">No scan yet — enter a network above and hit Scan.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="note">
+    ARP scanning needs this run as root/admin for a raw socket; without it,
+    LanSled falls back to a ping sweep (fewer devices found, since some don't
+    answer pings). Everything runs locally — nothing about your network is
+    sent anywhere. Only scan networks you own or have permission to scan.
+  </p>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
